@@ -1,16 +1,17 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Container, TextField, Button } from '@material-ui/core';
+import { Container, TextField, Button, CircularProgress } from '@material-ui/core';
 import { Link } from 'react-router-dom';
 import { GATEWAY_URL } from '../../constants';
-
+import axios from 'axios';
 
 class Login extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             userName: '',
-            password: ''
+            password: '',
+            loading: false
         };
     }
 
@@ -27,22 +28,46 @@ class Login extends React.Component {
             "rememberMe": true,
             "username": this.state.userName
         }
+        this.setState({
+            loading: true
+        });
         // this.props.history.push('/');
-        fetch(url, {
-            method: 'post',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(request)
-        }).then((response) => {
+        axios.post(url, request, {
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(response => {
             if (response.status === 200) {
-                const token = response.body.id_token;
-                token && localStorage.setItem(`${this.state.userName}-token`, token);
-                console.log(response);
+                const token = response.data.id_token;
+                token && localStorage.setItem(`token`, token);
+                this.getUserId();
+            }
+        }).catch(error => {
+            console.warn(error);
+        });
+    }
+
+    getUserId = () => {
+        var url = `${GATEWAY_URL}api/account`;
+        axios.get(url, {
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+        }).then(response => {
+            if (response.status === 200) {
+                var id = response.data.id;
+                id && localStorage.setItem(`userId`, id);
+                this.setState({
+                    loading: false
+                });
                 this.props.history.push('/');
             }
-        },
-            (error) => {
-                console.warn(error);
-            });
+        }).catch(error => {
+            console.log(error)
+        })
+
     }
 
     render() {
@@ -58,14 +83,15 @@ class Login extends React.Component {
                                 <LoginField id="userName" label="Username" variant="outlined" onChange={this._handleTextInput.bind(this, 'userName')} />
                                 <LoginField id="password" label="Password" variant="outlined" onChange={this._handleTextInput.bind(this, 'password')} type="password" />
                             </form>
-                            <Button
+                            {!this.state.loading ? <Button
                                 variant="contained"
                                 color="primary"
                                 disabled={!this.state.userName || !this.state.password}
                                 onClick={this._handleLogin}
                             >
                                 Login
-                            </Button>
+                            </Button> :
+                            <CircularProgress />}
                         </Wrapper>
                         <BottomSpan>
                             <Link to='\auth\register'>
