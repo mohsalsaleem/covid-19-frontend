@@ -1,6 +1,6 @@
 import React from 'react';
-
-class Register extends React.Component{
+import Button from '@material-ui/core/Button';
+class Register extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -9,8 +9,10 @@ class Register extends React.Component{
     }
 
     render() {
-        return(
-            'Register'
+        return (
+            <Button variant="contained" color="primary">
+                Register
+            </Button>
         );
     }
 }
